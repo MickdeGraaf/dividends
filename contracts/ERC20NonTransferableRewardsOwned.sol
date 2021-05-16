@@ -31,9 +31,11 @@ contract ERC20NonTransferableRewardsOwned is ERC20NonTransferableRewards, Ownabl
   }
 
   function initialize(string memory name_, string memory symbol_, address token_) public initializer {
-    __Ownable_init();
     require(token == address(0), "Already Initialized");
     token = token_;
+
+    __Ownable_init();
+    ERC20.initialize(name_, symbol_);
   }
 
   function mint(address to, uint256 amount) external virtual onlyOwner {
@@ -87,9 +89,13 @@ contract ERC20NonTransferableRewardsOwned is ERC20NonTransferableRewards, Ownabl
     _distributeRewards(totalRedistributed);
   }
 
-  function distribute(uint256 amount) external {
+  function distributeRewards(uint256 amount) external {
     token.safeTransferFrom(msg.sender, address(this), amount);
     _distributeRewards(amount);
+  }
+
+  function getPointsCorrection(address account) external view returns (int256) {
+    return pointsCorrection[account];
   }
 
 
