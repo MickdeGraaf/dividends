@@ -14,7 +14,7 @@ describe('ERC20NonTransferableRewardBearing', () => {
   beforeEach('Deploy ERC20Rewards', async () => {
     const factory = await ethers.getContractFactory('ERC20NonTransferableRewardsOwned')
     erc20 = (await factory.deploy()) as ERC20NonTransferableRewardsOwned;
-    await erc20['initialize(string,string,address)']("vDOUGH", "vDOUGH", constants.AddressZero);
+    await erc20['initialize(string,string,address,address)']("vDOUGH", "vDOUGH", constants.AddressZero, wallet.address);
   })
 
   const getPointsPerShare = (amount: BigNumber, totalSupply: BigNumber) => amount.mul(POINTS_MULTIPLIER).div(totalSupply);
@@ -189,8 +189,8 @@ describe('ERC20NonTransferableRewardBearing', () => {
         expect(rootValue).to.eq(root);
       });
 
-      it("Setting the participationMerkleRoot from a non owner should fail", async() => {
-        await expect(erc20.connect(wallet2).setParticipationMerkleRoot(root)).to.be.revertedWith("Ownable: caller is not the owner");
+      it("Setting the participationMerkleRoot from a non maintainer should fail", async() => {
+        await expect(erc20.connect(wallet2).setParticipationMerkleRoot(root)).to.be.revertedWith("onlyMaintainer: sender is not maintainer");
       });
 
       it("Claiming rewards when you have been actively participating should work", async() => {
