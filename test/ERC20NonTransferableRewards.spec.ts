@@ -1,6 +1,6 @@
 import { ethers, waffle } from 'hardhat';
 import { expect } from "chai";
-import {  TestERC20NonTransferableRewards } from '../typechain/TestERC20NonTransferableRewards';
+import { TestERC20NonTransferableRewards } from '../typechain/TestERC20NonTransferableRewards';
 import { POINTS_MULTIPLIER, toBigNumber } from './shared/utils';
 import { BigNumber, constants } from 'ethers';
 import { createParticipationTree, ParticipationEntry, ParticipationEntryWithLeaf } from '../utils';
@@ -11,10 +11,10 @@ describe('ERC20NonTransferableRewardBearing', () => {
   let [wallet, wallet1, wallet2] = waffle.provider.getWallets()
   let erc20: TestERC20NonTransferableRewards;
 
-  beforeEach('Deploy TestERC20Rewards', async () => {
-    const factory = await ethers.getContractFactory('TestERC20NonTransferableRewards')
+  beforeEach('Deploy ERC20Rewards', async () => {
+    const factory = await ethers.getContractFactory('ERC20NonTransferableRewardsOwned')
     erc20 = (await factory.deploy()) as TestERC20NonTransferableRewards;
-    await erc20['initialize(string,string,address)']("vDOUGH", "vDOUGH", constants.AddressZero);
+    await erc20['initialize(string,string,address,address)']("vDOUGH", "vDOUGH", constants.AddressZero, wallet.address);
   })
 
   const getPointsPerShare = (amount: BigNumber, totalSupply: BigNumber) => amount.mul(POINTS_MULTIPLIER).div(totalSupply);
@@ -189,8 +189,8 @@ describe('ERC20NonTransferableRewardBearing', () => {
         expect(rootValue).to.eq(root);
       });
 
-      it("Setting the participationMerkleRoot from a non owner should fail", async() => {
-        await expect(erc20.connect(wallet2).setParticipationMerkleRoot(root)).to.be.revertedWith("Ownable: caller is not the owner");
+      it("Setting the participationMerkleRoot from a non maintainer should fail", async() => {
+        await expect(erc20.connect(wallet2).setParticipationMerkleRoot(root)).to.be.revertedWith("onlyMaintainer: sender is not maintainer");
       });
 
       it("Claiming rewards when you have been actively participating should work", async() => {
