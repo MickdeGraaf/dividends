@@ -1,6 +1,6 @@
 import { ethers, waffle } from 'hardhat';
 import { expect } from "chai";
-import { TestERC20NonTransferableRewards } from '../typechain/TestERC20NonTransferableRewards';
+import { ERC20NonTransferableRewardsOwned } from '../typechain/ERC20NonTransferableRewardsOwned';
 import { POINTS_MULTIPLIER, toBigNumber } from './shared/utils';
 import { BigNumber, constants } from 'ethers';
 import { createParticipationTree, ParticipationEntry, ParticipationEntryWithLeaf } from '../utils';
@@ -9,11 +9,11 @@ import { parseEther } from 'ethers/lib/utils';
 
 describe('ERC20NonTransferableRewardBearing', () => {
   let [wallet, wallet1, wallet2] = waffle.provider.getWallets()
-  let erc20: TestERC20NonTransferableRewards;
+  let erc20: ERC20NonTransferableRewardsOwned;
 
   beforeEach('Deploy ERC20Rewards', async () => {
     const factory = await ethers.getContractFactory('ERC20NonTransferableRewardsOwned')
-    erc20 = (await factory.deploy()) as TestERC20NonTransferableRewards;
+    erc20 = (await factory.deploy()) as ERC20NonTransferableRewardsOwned;
     await erc20['initialize(string,string,address,address)']("vDOUGH", "vDOUGH", constants.AddressZero, wallet.address);
   })
 
@@ -118,14 +118,14 @@ describe('ERC20NonTransferableRewardBearing', () => {
 
   describe('prepareCollect', () => {
     it('Does nothing if user balance or rewards are 0', async () => {
-      await erc20.prepareCollect(wallet.address)
-      expect(await erc20.withdrawnRewardsOf(wallet.address)).to.eq(0)
+      await erc20.collect();
+      expect(await erc20.withdrawnRewardsOf(wallet.address)).to.eq(0);
     })
 
     it('Updates withdrawnRewards', async () => {
       await erc20.mint(wallet.address, toBigNumber(5));
       await erc20.distributeRewards(toBigNumber(10));
-      await erc20.prepareCollect(wallet.address)
+      await erc20.collect();
       expect(await erc20.withdrawnRewardsOf(wallet.address)).to.eq(toBigNumber(10))
       expect(await erc20.withdrawableRewardsOf(wallet.address)).to.eq(0)
     })

@@ -70,10 +70,9 @@ contract ERC20NonTransferableRewardsOwned is ERC20NonTransferableRewards, Ownabl
 
   function collectForWithParticipation(address account, bytes32[] memory proof) public participationNeeded {
     bytes32 leaf = keccak256(abi.encodePacked(account, uint256(ParticipationType.YES)));
-    // console.log("leaf", leaf);
-    console.log("account", account);
-    console.log("participation type", uint256(ParticipationType.YES));
+
     require(MerkleProof.verify(proof, participationMerkleRoot, leaf), "collectForWithParticipation: Invalid merkle proof");
+
     uint256 amount = _prepareCollect(account);
     token.safeTransfer(account, amount);
 
@@ -103,9 +102,13 @@ contract ERC20NonTransferableRewardsOwned is ERC20NonTransferableRewards, Ownabl
     _distributeRewards(totalRedistributed);
   }
 
-  function distribute(uint256 amount) external {
+  function distributeRewards(uint256 amount) external {
     token.safeTransferFrom(msg.sender, address(this), amount);
     _distributeRewards(amount);
+  }
+
+  function getPointsCorrection(address account) external view returns (int256) {
+    return pointsCorrection[account];
   }
 
 
