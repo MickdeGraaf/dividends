@@ -468,7 +468,7 @@ describe('SharesTimeLock', () => {
     });
   });
   
-  describe.only("triggerEmergencyUnlock", async() => {
+  describe("triggerEmergencyUnlock", async() => {
     it("Should change emergencyUnlockTriggered value", async() => {
       await timeLock.triggerEmergencyUnlock();
       expect(await timeLock.emergencyUnlockTriggered()).to.eq(true);
