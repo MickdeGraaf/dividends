@@ -21,6 +21,7 @@ contract ERC20NonTransferableRewardsOwned is ERC20NonTransferableRewards, Ownabl
 
 
   event ClaimedFor(uint256 amount, address indexed collector, address indexed to, bytes32[] proof);
+  event RewardsRedistributed(uint256 amount, address indexed account);
 
 
   enum ParticipationType{ INACTIVE, YES }
@@ -83,7 +84,9 @@ contract ERC20NonTransferableRewardsOwned is ERC20NonTransferableRewards, Ownabl
         // skip if proof is invalid
         continue;
       }
-      totalRedistributed += _prepareCollect(accounts[i]);
+      uint256 redistributedAmount = _prepareCollect(accounts[i]);
+      totalRedistributed += redistributedAmount;
+      emit RewardsRedistributed(redistributedAmount, accounts[i]);
     }
 
     require(totalRedistributed > 0, "redistribute: Nothing to redistribute");

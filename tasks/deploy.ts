@@ -161,6 +161,19 @@ task("deploy-staking-proxied-testing")
         console.log("done");
 });
 
+task("deploy-d-token-implementation", async(taskArgs, {ethers}) => {
+    const signer = (await ethers.getSigners())[0];
+
+    console.log(`Deploying from: ${signer.address}`);
+
+    const contracts: any[] = [];
+
+    const dTokenImp = await (new ERC20NonTransferableRewardsOwned__factory(signer)).deploy();
+    contracts.push({name: "dTokenImp", address: dTokenImp.address});
+
+    console.table(contracts);
+});
+
 task("deploy-timelock-implementation", async(taskArgs, {ethers}) => {
     const signer = (await ethers.getSigners())[0];
 
