@@ -175,3 +175,48 @@ If a lock can be ejected or not
 ```solidity
 function canEject(address account, uint256 lockId) public view returns(bool);
 ```
+
+### ERC20NonTransferableRewardsOwned (veDOUGH)
+
+This contract supports all ERC20 read functions to fetch balances and the totalSupply
+
+#### Claim rewards for another address
+
+Claim rewards for another address submitting a proof of participation
+
+```solidity
+function claimFor(address account, bytes32[] memory proof) external;
+```
+
+#### Claim rewards for yourself
+
+Claim rewards for the calling address submitting a proof of participation
+
+```solidity
+function claim(bytes32[] calldata proof) external;
+```
+
+#### Redistributing rewards
+
+When a user has been flagged in the merkle tree as inactive their rewards can be redistributed to other stakers by anyone.
+Anyone can do so in batches by submitting a proof of inactivity for a specific account.
+
+```solidity
+function redistribute(address[] calldata accounts, bytes32[][] calldata proofs) external;
+```
+
+#### Distributing rewards
+
+Any address is able to distribute rewards to stakers by approving and having a sufficient amount of RWRD tokens.
+
+```solidity
+function distributeRewards(uint256 amount) external;
+```
+
+#### Setting the participation merkle root
+
+The maintainer can set the merkle root.
+
+```solidity
+function setParticipationMerkleRoot(bytes32 newParticipationMerkleRoot) external;
+```
