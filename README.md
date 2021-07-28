@@ -140,3 +140,38 @@ Only whitelisted contracts can lock tokens or deposit to an address other than t
 ```solidity
 function setWhitelisted(address user, bool isWhitelisted) external;
 ```
+
+
+#### Getters
+
+Get all staking data for an address
+
+
+```solidity
+function getStakingData(address account) external view returns (StakingData memory data);
+
+// StakingData data structure
+struct StakingData {
+    uint256 totalStaked; // total amount of DOUGH staked
+    uint256 veTokenTotalSupply; // total amount of veDOUGH
+    uint256 accountVeTokenBalance; // account veDOUGH balance
+    uint256 accountWithdrawableRewards; // amount of RWRD an account can withdraw (not taking into consideration participation)
+    uint256 accountWithdrawnRewards; // amount of RWRD withdrawn by this address
+    uint256 accountDepositTokenBalance; // DOUGH balance of account
+    uint256 accountDepositTokenAllowance; // DOUGH approved to SharesTimeLock contract
+    Lock[] accountLocks; // Locks of an account
+}
+
+// Lock data structure
+struct Lock {
+    uint256 amount; // amount locked
+    uint32 lockedAt; // timestamp when tokens were locked
+    uint32 lockDuration; // duration of lock
+}
+```
+
+If a lock can be ejected or not
+
+```solidity
+function canEject(address account, uint256 lockId) public view returns(bool);
+```
