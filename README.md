@@ -90,6 +90,12 @@ npx hardhat generate-proof --input merkleLeafs.json --output proof.json --addres
 ```
 
 
+## Deployment
+
+```
+npx hardhat deploy-staking --deposit-token [DOUGH_ADDRESS] --name veDOUGH --symbol veDOUGH --min-lock-duration 15552000 --max-lock-duration 93312000 --min-lock-amount [min amount to lock in wei] --network mainnet
+```
+
 ## Integration
 
 ### SharesTimeLock
