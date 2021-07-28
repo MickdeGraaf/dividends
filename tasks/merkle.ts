@@ -126,7 +126,7 @@ async function getAccounts(tokenAddress: string, signer:Signer, fromBlock: numbe
         const events = await token.queryFilter(filter, currentFromBlock, currentFromBlock + BATCH_SIZE);
         for (const event of events) {
             if(event.args) {
-                console.log("hmm");
+                console.log("processing transfer");
                 accounts[event.args.from] = {participation: 0};
                 accounts[event.args.to] = {participation: 0};
             }

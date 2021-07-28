@@ -55,3 +55,36 @@ Compiles artifacts into `artifacts/` and generates typechain interfaces in `type
 `yarn lint`
 
 Runs solhint against the contracts.
+
+
+## Generating participation
+
+A crude implementation of a script which looks at DOUGH holder participation in snapshot and generates a JSON file of participation can be run like so (takes some time):
+
+```
+npx hardhat generate-participation --output participation.json --inactive-time 1611824460 --network mainnet
+```
+
+## Generating leafs from participation
+
+```
+npx hardhat generate-leafs --input participation --output merkleLeafs.json
+```
+
+These leafs can be used in applications to generate merkle proofs or compute the root
+
+## Generating merkle root
+
+Will log the merkle root which can be set in the dToken contract to update participation
+
+```
+npx hardhat generate-merkle-root --input merkleLeafs.json
+```
+
+## Generating merkle proof
+
+If for whatever reason you need to generate a proof outside the UI you can do it through the following command
+
+```
+npx hardhat generate-proof --input merkleLeafs.json --output proof.json --address 0x8EDAB1576B34b0BFdcdF4F368eFDE5200ff6F4e8
+```
