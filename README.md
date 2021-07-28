@@ -88,3 +88,55 @@ If for whatever reason you need to generate a proof outside the UI you can do it
 ```
 npx hardhat generate-proof --input merkleLeafs.json --output proof.json --address 0x8EDAB1576B34b0BFdcdF4F368eFDE5200ff6F4e8
 ```
+
+
+## Integration
+
+### SharesTimeLock
+
+#### Deposit
+
+Users can lock their DOUGH for 6-36 months. They can do so by calling the following function. The amount of tokens deposited needs to be ``approved`` by the caller first.
+
+```solidity
+function depositByMonths(uint256 amount, uint256 months, address receiver) external;
+```
+
+#### Withdraw
+
+After a lock has expired it can be withdrawn.
+
+```solidity
+function withdraw(uint256 lockId) external;
+```
+
+#### Boosting to Max
+
+When a user has staked for a shorter duration than 36 months or they want to extend their lock they can do so by boosting it.
+This deletes the old lock and generates a new one with a duration of 36 months
+
+```solidity
+function boostToMax(uint256 lockId) external;
+```
+
+#### Ejecting expired locks
+
+When a lock expired it can be ejected by anyone. Stakers are incentivised to do this to increase their proportional share of the rewards. Ejection can be done in batches:
+
+```solidity
+function eject(address[] memory lockAccounts, uint256[] memory lockIds) external;
+```
+
+#### Admin functionality
+
+To prevent small locks interfering with the ejections a reasonable min lock should be set. This can be upgraded by the ``owner``
+
+```solidity
+function setMinLockAmount(uint256 minLockAmount_) external;
+```
+
+Only whitelisted contracts can lock tokens or deposit to an address other than themselves. To whitelist an address from the ``owner``
+
+```solidity
+function setWhitelisted(address user, bool isWhitelisted) external;
+```
