@@ -76,7 +76,7 @@ task("generate-participation")
             }
           }`
 
-        const result = (await (await fetch('https://hub.snapshot.page/graphql', {
+        const result = (await (await fetch('https://hub.snapshot.org/graphql', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
