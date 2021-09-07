@@ -40,6 +40,7 @@ contract SharesTimeLock is Ownable() {
   event Withdrawn(uint256 indexed lockId, uint256 amount, address indexed owner);
   event Ejected(uint256 indexed lockId, uint256 amount, address indexed owner);
   event BoostedToMax(uint256 indexed oldLockId, uint256 indexed newLockId, uint256 amount, address indexed owner);
+  event EjectBufferUpdated(uint256 newEjectBuffer);
 
   struct Lock {
     uint256 amount;
@@ -61,6 +62,8 @@ contract SharesTimeLock is Ownable() {
   mapping(address => Lock[]) public locksOf;
 
   mapping(address => bool) public whitelisted;
+
+  uint256 public ejectBuffer;
 
 
   function getLocksOfLength(address account) external view returns (uint256) {
@@ -92,6 +95,7 @@ contract SharesTimeLock is Ownable() {
     minLockDuration = minLockDuration_;
     maxLockDuration = maxLockDuration_;
     minLockAmount = minLockAmount_;
+    ejectBuffer = 7 days;
 
     maxRatioArray = [
       1,
@@ -210,7 +214,7 @@ contract SharesTimeLock is Ownable() {
 
       Lock memory lock = locksOf[lockAccounts[i]][lockIds[i]];
       //skip if lock not expired or locked amount is zero
-      if(lock.lockedAt + lock.lockDuration > block.timestamp || lock.amount == 0) {
+      if(lock.lockedAt + lock.lockDuration + ejectBuffer > block.timestamp || lock.amount == 0) {
         continue;
       }
 
@@ -242,6 +246,12 @@ contract SharesTimeLock is Ownable() {
     require(!emergencyUnlockTriggered, "TriggerEmergencyUnlock: already triggered");
     emergencyUnlockTriggered = true;
   }
+
+  function setEjectBuffer(uint256 buffer) external onlyOwner {
+    ejectBuffer = buffer;
+    emit EjectBufferUpdated(buffer);
+  }
+
 
   /**
   * Getters
