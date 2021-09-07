@@ -129,7 +129,10 @@ describe('SharesTimeLock', () => {
       it('maxLockDuration', async () => {
         expect(await timeLock.maxLockDuration()).to.eq(MAXTIME)
       })
-  
+      
+      it('ejectBuffer', async () => {
+        expect(await timeLock.ejectBuffer()).to.eq(duration.days(7));
+      });
     })
   })
 
@@ -296,7 +299,7 @@ describe('SharesTimeLock', () => {
   })
 
   describe('eject()', () => {
-    it('Should eject expired locks', async () => {
+    it('Should eject expired locks (including ejectBuffer)', async () => {
       await timeLock.depositByMonths(toBigNumber(10), 6, wallet.address)
       await timeLock.connect(wallet1).depositByMonths(toBigNumber(10), 6, wallet1.address)
 
@@ -305,13 +308,13 @@ describe('SharesTimeLock', () => {
       expect(await timeLock.getLocksOfLength(wallet1.address)).to.eq(1);
 
       const timestamp = await latest();
-      await setNextTimestamp(timestamp + duration.months(6) + duration.hours(1));
+      await setNextTimestamp(timestamp + duration.months(6) + duration.weeks(1) + duration.hours(1));
       
       expect(await timeLock.eject([wallet.address, wallet1.address], [0, 0]))
         .to.emit(timeLock, "Ejected")
-        .withArgs(toBigNumber(10), wallet.address)
+        .withArgs(0, toBigNumber(10), wallet.address)
         .to.emit(timeLock, "Ejected")
-        .withArgs(toBigNumber(10), wallet1.address)
+        .withArgs(0, toBigNumber(10), wallet1.address)
       
       expect(await timeLock.getLocksOfLength(wallet.address)).to.eq(1);
       expect(await timeLock.getLocksOfLength(wallet1.address)).to.eq(1);
@@ -340,7 +343,7 @@ describe('SharesTimeLock', () => {
       await timeLock.connect(wallet2).depositByMonths(toBigNumber(10), 6, wallet2.address)
       let timestampThree = await latest();
 
-      await setNextTimestamp(timestampThree + duration.months(6) + duration.hours(1));
+      await setNextTimestamp(timestampThree + duration.months(6) + duration.weeks(1) + duration.hours(1));
 
       expect(await depositToken.balanceOf(timeLock.address)).to.eq(toBigNumber(30));
       expect(await timeLock.getLocksOfLength(wallet.address)).to.eq(1);
@@ -389,6 +392,15 @@ describe('SharesTimeLock', () => {
         .to.be.revertedWith('Ownable: caller is not the owner');
     })
   })
+
+  describe('setEjectBuffer()', () => {
+    it('Should set new eject buffer', async () => {
+      expect(await timeLock.setEjectBuffer(duration.weeks(2)))
+        .to.emit(timeLock, 'EjectBufferUpdated').withArgs(duration.weeks(2));
+      
+      expect(await timeLock.ejectBuffer()).to.eq(duration.weeks(2));
+    });
+  });
 
   describe('boostToMax()', () => {
     it('Should boost the lock to max time', async () => {
@@ -501,8 +513,6 @@ describe('SharesTimeLock', () => {
       await expect(timeLock.withdraw(0))
         .to.emit(timeLock, 'Withdrawn')
         .withArgs(toBigNumber(0), toBigNumber(1), wallet.address)
-
-      await expect(timeLock.withdraw(0))
         .to.emit(rewardsToken, 'Transfer')
         .withArgs(wallet.address, constants.AddressZero, expected.toString())
     });
