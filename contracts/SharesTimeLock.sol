@@ -278,7 +278,7 @@ contract SharesTimeLock is Ownable() {
     return AVG_SECONDS_MONTH;
   }
 
-  function canEject(address account, uint256 lockId) public view returns(bool) {
+  function canEject(address account, uint256 lockId) external view returns(bool) {
 
     //cannot eject non existing locks
     if(locksOf[account].length - 1 < lockId) {
