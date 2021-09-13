@@ -292,6 +292,6 @@ contract SharesTimeLock is Ownable() {
       return false;
     }
 
-    return lock.lockedAt + lock.lockDuration <= block.timestamp;
+    return lock.lockedAt + lock.lockDuration + ejectBuffer <= block.timestamp;
   }
 }
