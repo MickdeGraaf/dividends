@@ -107,11 +107,11 @@ describe('One account operations', () => {
         expect(await depositToken.balanceOf(timeLock.address)).to.eq(toBigNumber(20));
 
         const timestamp = await latest();
-        await setNextTimestamp(timestamp + duration.months(6) + duration.hours(1));
+        await setNextTimestamp(timestamp + duration.months(6) + duration.weeks(1) + duration.hours(1));
 
         expect(await timeLock.eject([wallet1.address], [0]))
             .to.emit(timeLock, "Ejected")
-            .withArgs(toBigNumber(10), wallet1.address)
+            .withArgs(0, toBigNumber(10), wallet1.address)
 
         expect(await depositToken.balanceOf(timeLock.address)).to.eq(toBigNumber(10));
         expect(await depositToken.balanceOf(wallet1.address)).to.eq(toBigNumber(10));
@@ -135,11 +135,11 @@ describe('One account operations', () => {
 
         const timestamp = await latest();
 
-        await setNextTimestamp(timestamp + duration.months(6) + duration.hours(1));
+        await setNextTimestamp(timestamp + duration.months(6) + duration.weeks(1) + duration.hours(1));
 
         expect(await timeLock.eject([wallet1.address], [0]))
             .to.emit(timeLock, "Ejected")
-            .withArgs(toBigNumber(10), wallet1.address)
+            .withArgs(0, toBigNumber(10), wallet1.address)
         
         expect(await depositToken.balanceOf(timeLock.address)).to.eq(0);
         expect(await depositToken.balanceOf(wallet1.address)).to.eq(toBigNumber(10));
@@ -294,15 +294,15 @@ describe('Multiple accounts operations', () => {
         expect(await depositToken.balanceOf(timeLock.address)).to.eq(toBigNumber(50));
 
         const timestamp = await latest();
-        await setNextTimestamp(timestamp + duration.months(6) + duration.hours(1));
+        await setNextTimestamp(timestamp + duration.months(6) + duration.weeks(1) + duration.hours(1));
 
         expect(await timeLock.eject([wallet1.address], [0]))
             .to.emit(timeLock, "Ejected")
-            .withArgs(toBigNumber(10), wallet1.address)
+            .withArgs(0, toBigNumber(10), wallet1.address)
         
         expect(await timeLock.eject([wallet4.address], [0]))
             .to.emit(timeLock, "Ejected")
-            .withArgs(toBigNumber(10), wallet4.address)
+            .withArgs(0, toBigNumber(10), wallet4.address)
 
 
         expect(await depositToken.balanceOf(timeLock.address)).to.eq(toBigNumber(30));
@@ -337,15 +337,15 @@ describe('Multiple accounts operations', () => {
 
         const timestamp = await latest();
 
-        await setNextTimestamp(timestamp + duration.months(6) + duration.hours(1));
+        await setNextTimestamp(timestamp + duration.months(6) + duration.weeks(1) + duration.hours(1));
 
         expect(await timeLock.eject([wallet1.address], [0]))
             .to.emit(timeLock, "Ejected")
-            .withArgs(toBigNumber(10), wallet1.address)
+            .withArgs(0, toBigNumber(10), wallet1.address)
         
         expect(await timeLock.eject([wallet4.address], [0]))
             .to.emit(timeLock, "Ejected")
-            .withArgs(toBigNumber(10), wallet4.address)
+            .withArgs(0, toBigNumber(10), wallet4.address)
 
         
         expect(await depositToken.balanceOf(timeLock.address)).to.eq(toBigNumber(30));
