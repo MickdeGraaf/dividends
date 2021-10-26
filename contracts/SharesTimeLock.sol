@@ -3,7 +3,6 @@ pragma solidity ^0.7.0;
 pragma abicoder v2;
 
 import {OwnableUpgradeable as Ownable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "./interfaces/IDelegateRegistry.sol";
 import "./ERC20NonTransferableRewardsOwned.sol";
 import "./libraries/LowGasSafeMath.sol";
 
@@ -65,9 +64,6 @@ contract SharesTimeLock is Ownable() {
   mapping(address => bool) public whitelisted;
 
   uint256 public ejectBuffer;
-
-  address delegateRegistry;
-  event DelegateRegistryChanged(address indexed newDelegator);
 
   function getLocksOfLength(address account) external view returns (uint256) {
     return locksOf[account].length;
