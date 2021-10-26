@@ -3,6 +3,7 @@ pragma solidity ^0.7.0;
 pragma abicoder v2;
 
 import {OwnableUpgradeable as Ownable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "./interfaces/IDelegateRegistry.sol";
 import "./ERC20NonTransferableRewardsOwned.sol";
 import "./libraries/LowGasSafeMath.sol";
 
@@ -65,6 +66,8 @@ contract SharesTimeLock is Ownable() {
 
   uint256 public ejectBuffer;
 
+  address delegateRegistry;
+  event DelegateRegistryChanged(address indexed newDelegator);
 
   function getLocksOfLength(address account) external view returns (uint256) {
     return locksOf[account].length;
@@ -240,6 +243,29 @@ contract SharesTimeLock is Ownable() {
   function setWhitelisted(address user, bool isWhitelisted) external onlyOwner {
     whitelisted[user] = isWhitelisted;
     emit WhitelistedChanged(user, isWhitelisted);
+  }
+
+  function setDelegateRegistry(address _delegateRegistry) external onlyOwner {
+    delegateRegistry = _delegateRegistry;
+    emit DelegateRegistryChanged(_delegateRegistry);
+  }
+
+  function setWhitelistedDelegate(address user, address delegate) external onlyOwner {
+    require(
+      user == whitelisted[user],
+      "Not whitelisted"
+    );
+    IDelegateRegistry registry = IDelegateRegistry(delegateRegistry);
+    registry.setDelegate(user, delegate);
+  }
+
+  function clearWhitelistedDelegate(address user) external onlyOwner {
+    require(
+      user == whitelisted[user],
+      "Not whitelisted"
+    );
+    IDelegateRegistry registry = IDelegateRegistry(delegateRegistry);
+    registry.clearDelegate(user);
   }
 
   function triggerEmergencyUnlock() external onlyOwner {
