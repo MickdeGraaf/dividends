@@ -245,29 +245,6 @@ contract SharesTimeLock is Ownable() {
     emit WhitelistedChanged(user, isWhitelisted);
   }
 
-  function setDelegateRegistry(address _delegateRegistry) external onlyOwner {
-    delegateRegistry = _delegateRegistry;
-    emit DelegateRegistryChanged(_delegateRegistry);
-  }
-
-  function setWhitelistedDelegate(address user, address delegate) external onlyOwner {
-    require(
-      user == whitelisted[user],
-      "Not whitelisted"
-    );
-    IDelegateRegistry registry = IDelegateRegistry(delegateRegistry);
-    registry.setDelegate(user, delegate);
-  }
-
-  function clearWhitelistedDelegate(address user) external onlyOwner {
-    require(
-      user == whitelisted[user],
-      "Not whitelisted"
-    );
-    IDelegateRegistry registry = IDelegateRegistry(delegateRegistry);
-    registry.clearDelegate(user);
-  }
-
   function triggerEmergencyUnlock() external onlyOwner {
     require(!emergencyUnlockTriggered, "TriggerEmergencyUnlock: already triggered");
     emergencyUnlockTriggered = true;
