@@ -65,7 +65,6 @@ contract SharesTimeLock is Ownable() {
 
   uint256 public ejectBuffer;
 
-
   function getLocksOfLength(address account) external view returns (uint256) {
     return locksOf[account].length;
   }

@@ -187,3 +187,17 @@ task("deploy-timelock-implementation", async(taskArgs, {ethers}) => {
 
     console.table(contracts);
 });
+
+task("deploy-staking-delegate-registry", async(taskArgs, {ethers}) => {
+    const signer = await ethers.getSigners()[0];
+
+    console.log(`Deploying from: ${signer.address}`);
+
+    const contracts: any[] = [];
+
+    const delegateRegistry = await (new DoughStakingDelegateRegistry__factory(signer)).deploy();
+    contracts.push({name: "delegateRegistry", address: delegateRegistry.address});
+    console.log("delegateRegistry deployed");
+    console.table(contracts);
+
+})
