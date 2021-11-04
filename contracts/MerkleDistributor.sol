@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.0;
+pragma solidity ^0.7.6;
+pragma abicoder v2;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {OwnableUpgradeable as Ownable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {MerkleProofUpgradeable as MerkleProof} from "@openzeppelin/contracts-upgradeable/cryptography/MerkleProofUpgradeable.sol";
+import {SafeMathUpgradeable as SafeMath} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {SafeERC20Upgradeable as SafeERC20} from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import {IERC20Upgradeable as IERC20} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /**
  * Inspired by:
@@ -54,10 +55,9 @@ contract MerkleDistributor is Ownable {
     // Track which accounts have claimed for each window index.
     // Note: uses a packed array of bools for gas optimization on tracking certain claims. Copied from Uniswap's contract.
     mapping(uint256 => mapping(uint256 => uint256)) private claimedBitMap;
-    
-    
-    //Block until when the merkle is locked
-    uint256 lockBlock;
+
+    // Block until when the distributor is locked
+    uint256 public lockBlock;
 
     /****************************************
      *                EVENTS
@@ -81,8 +81,25 @@ contract MerkleDistributor is Ownable {
     event LockSet(uint256 indexed lockBlock);
 
     /****************************
+     *      MODIFIERS
+     ****************************/
+
+    modifier notLocked() {
+        require(lockBlock == 0 || lockBlock < block.number, "Distributor is Locked");
+
+        _;
+    }
+
+    /****************************
      *      ADMIN FUNCTIONS
      ****************************/
+
+    /**
+     * @notice Initializer for the contract. This contract should be behind a PieProxy.
+     */
+    function initialize() public initializer {
+        __Ownable_init();
+    }
 
     /**
      * @notice Set merkle root for the next available window index and seed allocations.
@@ -120,34 +137,16 @@ contract MerkleDistributor is Ownable {
 
         _setWindow(indexToSet, rewardsToDeposit, rewardToken, merkleRoot, ipfsHash);
     }
-    
-    
+
     /**
      * @notice Set block to lock the contract
-     * @dev Callable only by owner. 
-     * @param uint256 _lock
+     * @dev Callable only by owner.
+     * @param _lock block number until when the contract should be locked
      */
     function setLock(uint256 _lock) external onlyOwner {
         lockBlock = _lock;
         emit LockSet(_lock);
     }
-
-    /**
-     * @notice Get
-     * @dev Returns true when locked
-     */
-    function getLock() external view returns(bool) {
-        return lockBlock == 0 || lockBlock >= block.number;
-    }
-
-    /**
-     * @notice Get block locked
-     * @dev 
-     */
-    function getLockBlock() external view returns(uint256) {
-        return lockBlock;
-    }
-
 
     /**
      * @notice Delete merkle root at window index.
@@ -182,8 +181,7 @@ contract MerkleDistributor is Ownable {
      *         is to pass in an array of claims sorted by account and reward currency.
      * @param claims array of claims to claim.
      */
-    function claimMulti(Claim[] memory claims) external {
-        require(!this.getLock(), "LOCKED");
+    function claimMulti(Claim[] memory claims) external notLocked {
         uint256 batchedAmount = 0;
         uint256 claimCount = claims.length;
         for (uint256 i = 0; i < claimCount; i++) {
@@ -216,8 +214,7 @@ contract MerkleDistributor is Ownable {
      *         will revert.
      * @param _claim claim object describing amount, accountIndex, account, window index, and merkle proof.
      */
-    function claim(Claim memory _claim) public {
-        require(!this.getLock(), "LOCKED");
+    function claim(Claim memory _claim) public notLocked {
         _verifyAndMarkClaimed(_claim);
         merkleWindows[_claim.windowIndex].rewardToken.safeTransfer(_claim.account, _claim.amount);
     }

@@ -5,7 +5,7 @@ import { TestERC20__factory } from "../typechain/factories/TestERC20__factory";
 import { SharesTimeLock__factory } from "../typechain/factories/SharesTimeLock__factory";
 import { TestSharesTimeLock__factory } from "../typechain/factories/TestSharesTimeLock__factory";
 import { PProxy__factory } from "../typechain/factories/PProxy__factory";
-import { ContractFunctionVisibility } from "hardhat/internal/hardhat-network/stack-traces/model";
+import { MerkleDistributor__factory } from "../typechain/factories/MerkleDistributor__factory";
 import { parseEther } from "ethers/lib/utils";
 
 task("deploy-staking")
@@ -188,16 +188,27 @@ task("deploy-timelock-implementation", async(taskArgs, {ethers}) => {
     console.table(contracts);
 });
 
-task("deploy-staking-delegate-registry", async(taskArgs, {ethers}) => {
-    const signer = await ethers.getSigners()[0];
+task("deploy-merkle-distributor-proxied", async(_, {ethers}) => {
+    const signer = (await ethers.getSigners())[0];
 
     console.log(`Deploying from: ${signer.address}`);
 
     const contracts: any[] = [];
 
-    const delegateRegistry = await (new DoughStakingDelegateRegistry__factory(signer)).deploy();
-    contracts.push({name: "delegateRegistry", address: delegateRegistry.address});
-    console.log("delegateRegistry deployed");
-    console.table(contracts);
+    const proxyFactory = new PProxy__factory(signer);
+    const merkleDistributorProxy = await proxyFactory.deploy();
+    contracts.push({name: "merkleDistributorProxy", address: merkleDistributorProxy.address});
 
-})
+
+    const merkleDistributorImpl = await (new MerkleDistributor__factory(signer)).deploy();
+    contracts.push({name: "merkleDistributorImpl", address: merkleDistributorImpl.address});
+
+    merkleDistributorProxy.setImplementation(merkleDistributorImpl.address);
+    const merkleDistributor = MerkleDistributor__factory.connect(merkleDistributorProxy.address, signer);
+
+    await merkleDistributor['initialize()']();
+
+    console.log("MerkleDistributor deployed!");
+
+    console.table(contracts);
+});
