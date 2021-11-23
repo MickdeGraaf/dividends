@@ -7,6 +7,8 @@ import {MerkleProofUpgradeable as MerkleProof} from "@openzeppelin/contracts-upg
 import {SafeMathUpgradeable as SafeMath} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import {SafeERC20Upgradeable as SafeERC20} from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable as IERC20} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "../interfaces/IAggregatorV3Interface.sol";
+import "../interfaces/ISharesTimeLock.sol";
 
 /**
  * Inspired by:
@@ -59,6 +61,19 @@ contract MerkleDistributor is Ownable {
     // Block until when the distributor is locked
     uint256 public lockBlock;
 
+
+    /****************************************
+     *       VERSION 2 State Addition
+     ****************************************/
+    
+    IAggregatorV3Interface sliceVeDoughOracle;
+    uint256 public totalCompounded;
+    address public doughReserve;
+    address public dough;
+    uint256 public constant STAKE_DURATION = 36;
+    ISharesTimeLock public sharesTimeLock;
+
+
     /****************************************
      *                EVENTS
      ****************************************/
@@ -79,6 +94,10 @@ contract MerkleDistributor is Ownable {
     event WithdrawRewards(address indexed owner, uint256 amount, address indexed currency);
     event DeleteWindow(uint256 indexed windowIndex, address owner);
     event LockSet(uint256 indexed lockBlock);
+    event TimelockUpdated(address newTimelock);
+    event DoughReserveUpdated(address newDoughReserve);
+    event DoughUpdated(address newDough);
+    event Compounded(uint256 sliceAmount, uint256 oraclePrice);
 
     /****************************
      *      MODIFIERS
@@ -146,6 +165,44 @@ contract MerkleDistributor is Ownable {
     function setLock(uint256 _lock) external onlyOwner {
         lockBlock = _lock;
         emit LockSet(_lock);
+    }
+
+    /**
+     * @notice Set block to lock the contract
+     * @dev Callable only by owner.
+     * @param _lock block number until when the contract should be locked
+     */
+    function setSliceVeDoughOracle(uint256 _sliceVedoughOracle) external onlyOwner {
+        IAggregatorV3Interface priceFeed = IAggregatorV3Interface(_sliceVedoughOracle);
+        TODO emit
+    }
+
+    /**
+     * @notice set the contract address of DOUGH
+     */
+    function setDough(address _dough) external onlyOwner
+    {
+        dough = _dough;
+        emit DoughUpdated(address(_dough));
+    }
+
+
+    /**
+     * @notice set the contract address where DOUGH is stored
+     */
+    function setDoughReserve(address _doughReserve) external onlyOwner
+    {
+        doughReserve = _doughReserve:
+        emit DoughReserveUpdated(address(_doughReserve));
+    }
+
+    /**
+     * @notice set the dough contract address as we need to transfer DOUGH when the user vests
+     */
+    function setTimelock(address _timelock) external onlyOwner
+    {
+        sharesTimeLock = ISharesTimeLock(_timelock);
+        emit TimelockUpdated(address(_timelock));
     }
 
     /**
@@ -217,6 +274,35 @@ contract MerkleDistributor is Ownable {
     function claim(Claim memory _claim) public notLocked {
         _verifyAndMarkClaimed(_claim);
         merkleWindows[_claim.windowIndex].rewardToken.safeTransfer(_claim.account, _claim.amount);
+    }
+
+    /** TODO
+     * @notice Claim amount of reward tokens for account, as described by Claim input object.
+     * @dev    If the `_claim`'s `amount`, `accountIndex`, and `account` do not exactly match the
+     *         values stored in the merkle root for the `_claim`'s `windowIndex` this method
+     *         will revert.
+     * @param _claim claim object describing amount, accountIndex, account, window index, and merkle proof.
+     */
+    function compound(Claim memory _claim) public notLocked {
+        _verifyAndMarkClaimed(_claim);
+        
+        (, int256 price, , uint256 timeStamp, ) = priceFeed.latestRoundData();
+        require(price > 0, 'zero price');
+        require(timeStamp > (block.timestamp - 7 days) , 'stale price');
+        
+        totalCompounded += _claim.amount;
+        uint256 amountConverted = _claim.amount * price;
+
+        // TODO require checkes 
+        // Approve DOUGH to Timelock (we need to approve)
+        IERC20(dough).safeTransferFrom(doughReserve, address(this), amountConverted);
+        // TODO consider have separate approval
+        IERC20(dough).safeApprove(address(sharesTimeLock), 0);
+        IERC20(dough).safeApprove(address(sharesTimeLock), amountConverted);
+
+        sharesTimeLock.depositByMonths(amountConverted, STAKE_DURATION, amountConverted);
+        
+        event Compounded(uint256 _claim.amount, uint256 price);
     }
 
     /**
