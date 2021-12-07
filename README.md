@@ -38,6 +38,10 @@ When an address is included into the tree and its value is set to `0` it has bee
 
 When an address is included into the tree and its value is set to `1` it has been active and the rewards can be claimed by calling ``claim``. Rewards can also be claimed for another address using ``claimFor``
 
+#### Accrual and Slashing
+
+Rewards can be accrued by an address during the time-lock period and be claimed at any given time. It’s important to mention that if the address merkle tree is set to ``0`` for 3 consecutive months then the accrued rewards will be re-distributed.
+
 ## Scripts
 
 `yarn test`
