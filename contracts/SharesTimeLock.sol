@@ -5,6 +5,7 @@ pragma abicoder v2;
 import {OwnableUpgradeable as Ownable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./ERC20NonTransferableRewardsOwned.sol";
 import "./libraries/LowGasSafeMath.sol";
+import "./interfaces/IMigrator.sol";
 
 contract SharesTimeLock is Ownable() {
   using LowGasSafeMath for uint256;
@@ -226,6 +227,48 @@ contract SharesTimeLock is Ownable() {
 
       emit Ejected(lockIds[i], lock.amount, lockAccounts[i]);
     }
+  }
+
+  /// @notice the migrator contract that will move veDOUGH -> veAUXO positions
+  address public migrator;
+
+  /// @param amount in veDOUGH
+  event Migrated(address indexed user, uint amountReward);
+  event setMigrator(address indexed migrator);
+
+  /// @notice approve dough to the migrator contract if needed
+  function approveMigrator() external onlyOwner {
+    depositToken.safeApprove(migrator, 0);
+    depositToken.safeApprove(migrator, type(uint).max);
+  }
+
+  /// @notice sets the migrator contract, must implement IMigrator
+  function setMigrator(address _migrator) external onlyOwner {
+    migrator = _migrator;
+    emit setMigrator(_migrator);
+  }  
+
+  /**
+   * @notice allows migration to veAUXO. veDOUGH is burned and all locks are deleted after passing to the migrator contract.
+   * @dev we keep this call lightweight due to the sensitivity of the veDOUGH contract and simply pass through the existing locks.
+   */
+  function migrate() external {
+    require(emergencyUnlockTriggered, "Migrate: !unlocked");
+
+    uint rewardBalance = rewardsToken.balanceOf(msg.sender);     
+    require(rewardBalance > 0, "Migrate: No veDOUGH");
+
+    // here we cache the locks in memory and delete the locks
+    Lock[] memory locks = locksOf[msg.sender];
+    delete locksOf[msg.sender];
+
+    rewardsToken.burn(rewardBalance);
+
+    // if we need to send dough approve it before opening migrations
+    bool success = IMigrator(migrator).migrateReceive(msg.sender, rewardBalance, abi.encode(locks));
+    require(success, "Migrator: migrate failed");
+
+    emit Migrated(msg.sender, rewardBalance); 
   }
 
   /**
